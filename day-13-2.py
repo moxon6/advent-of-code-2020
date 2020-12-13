@@ -6,8 +6,8 @@ with open("inputs/day13.txt") as f:
     buses = dict( (i, int(bus_id)) for (i, bus_id) in enumerate(f.readline().split(",")) if bus_id != "x" )
     buses_origin = { k:v for (k,v) in buses.items() }
 
-    for i in itertools.count(start=1):
-
+    i = 0
+    while True:
         for ((offset1, mod1), (offset2, mod2)) in itertools.product(buses.items(), buses.items()):
             if offset1 < offset2:
                 if (mod2 * i + (offset2 - offset1)) % mod1 == 0:
@@ -18,6 +18,8 @@ with open("inputs/day13.txt") as f:
                     buses[offset2 + i * mod2] = mod1 * mod2
                     print(f"Combining rules {(offset1, mod1)} and {(offset2, mod2)} with i={i}")
                     print(f"t + {offset2 + i * mod2} mod {mod1 * mod2} == 0")
+                    break
+        i += 1
         if len(buses) == 1:
             break
     
