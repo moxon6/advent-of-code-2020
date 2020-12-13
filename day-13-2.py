@@ -3,32 +3,38 @@ import itertools
 
 with open("inputs/day13.txt") as f:
     f.readline()
-    buses = dict( (i, int(bus_id)) for (i, bus_id) in enumerate(f.readline().split(",")) if bus_id != "x" )
-    buses_origin = { k:v for (k,v) in buses.items() }
+    buses = [ (i, int(bus_id)) for (i, bus_id) in enumerate(f.readline().split(",")) if bus_id != "x" ]
+    buses_origin = [ (x,y) for (x,y) in buses ]
 
     i = 0
     while True:
-        for ((offset1, mod1), (offset2, mod2)) in itertools.product(buses.items(), buses.items()):
+        for ((offset1, mod1), (offset2, mod2)) in itertools.product(buses, buses):
             if offset1 < offset2:
                 if (mod2 * i + (offset2 - offset1)) % mod1 == 0:
-                    del buses[offset1]
-                    del buses[offset2]
-                    if (offset2 + i * mod2) in buses:
+
+                    buses.remove((offset1, mod1))
+                    buses.remove((offset2, mod2))
+                    if (offset2 + i * mod2, mod1 * mod2) in buses:
                         raise Exception("Overwriting")
-                    buses[offset2 + i * mod2] = mod1 * mod2
+                    buses.append((offset2 + i * mod2, mod1 * mod2))
+                    buses = sorted(buses, key=lambda x: x[0])
+
                     print(f"Combining rules {(offset1, mod1)} and {(offset2, mod2)} with i={i}")
                     print(f"t + {offset2 + i * mod2} mod {mod1 * mod2} == 0")
+                    i = 0 # Start loop again after new rule add
                     break
-        i += 1
+
         if len(buses) == 1:
             break
+
+        i += 1
     
-    (offset, mod) = list(buses.items())[0]
+    (offset, mod) = buses[0]
 
     print(buses_origin)
     for j in itertools.count(start=1):
         solution = mod * j - offset
-        for (offset, mod) in buses_origin.items():
+        for (offset, mod) in buses_origin:
             if not (solution + offset) % mod == 0:
                 print(f"Solution {solution} rejected, rule {(offset, mod)} failed")
                 raise SystemExit
