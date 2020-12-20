@@ -76,7 +76,6 @@ with open("inputs/day20.txt") as f:
     def get_and_transform_adjacent_tiles(tile):
         return [ get_adjacent_in_direction(tile, direction) for direction in match_directions ]
         
-    # print(f"Initially locking in {tiles[0].id}")
     locked_in = set([ tiles[0].id ])
     frontier = [ tiles[0] ]
 
@@ -126,7 +125,6 @@ with open("inputs/day20.txt") as f:
 
         frontier = new_frontier
         for f in new_frontier:
-            # print(f"Locking in {f.id}")
             locked_in.add(f.id)
     
     top_left = tiles[0].id
@@ -134,27 +132,6 @@ with open("inputs/day20.txt") as f:
         top_left = go_left.get(top_left)
     while go_up.get(top_left, None) is not None:
         top_left = go_up.get(top_left)
-
-    top_right = tiles[0].id
-    while go_right.get(top_right, None) is not None:
-        top_right = go_right.get(top_right)
-    while go_up.get(top_right, None) is not None:
-        top_right = go_up.get(top_right)
-
-    bottom_right = tiles[0].id
-    while go_right.get(bottom_right, None) is not None:
-        bottom_right = go_right.get(bottom_right)
-    while go_down.get(bottom_right, None) is not None:
-        bottom_right = go_down.get(bottom_right)
-
-    bottom_left = tiles[0].id
-    while go_left.get(bottom_left, None) is not None:
-        bottom_left = go_left.get(bottom_left)
-    while go_down.get(bottom_left, None) is not None:
-        bottom_left = go_down.get(bottom_left)
-    
-    for go in (go_left, go_right, go_up, go_down):
-        print(go)
     
     start_of_line = top_left
     image = []
