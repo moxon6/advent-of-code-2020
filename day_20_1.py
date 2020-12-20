@@ -35,6 +35,15 @@ def transforms(arr):
         for rot in [0, 1, 2, 3]:
             yield make_transform(flip, rot)(arr)
 
+def get_adjacent_in_direction(tile, match_direction):
+    for candidate in tiles:
+        if (tile is candidate):
+            continue
+
+        for transform in transforms(candidate.data):
+            if match_direction(tile.data, transform):
+                return candidate
+
 with open("inputs/day20.txt") as f:
     tile_sections = f.read().split("\n\n")
     tiles = [ parse_tile_section(section) for section in tile_sections ]
@@ -49,25 +58,11 @@ with open("inputs/day20.txt") as f:
         if cache == get_below:
             return get_above
 
+    match_directions = [matches_left, matches_right, matches_up, matches_down]
+
     def get_adjacent_tiles(tile):
-
-        adjacents = []
-
-        for match_direction in [matches_left, matches_right, matches_up, matches_down]:
-            def get_adjacent_in_direction():
-                for candidate in tiles:
-                    if (tile is candidate):
-                        continue
-
-                    for transform in transforms(candidate.data):
-                        if match_direction(tile.data, transform):
-                            return candidate
-            adjacent = get_adjacent_in_direction()
-            if adjacent is not None:
-                adjacents.append(adjacent)
-        return adjacents
-
-    total = 1
+        adjacents = [ get_adjacent_in_direction(tile, direction) for direction in match_directions ]
+        return [x for x in adjacents if x is not None]
 
     adjacents = {
         tile.id : get_adjacent_tiles(tile)
