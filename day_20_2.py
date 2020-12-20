@@ -144,9 +144,7 @@ def get_full_image():
             image.append([ start_of_line ])
             
             while True: # Do while
-                print(f"Current tile {current_tile}")
                 current_tile = go_right.get(current_tile)
-                print(f"Next tile {current_tile}")
                 image[-1].append(current_tile)
                 if go_right.get(current_tile, None) is None:
                     break
@@ -157,7 +155,7 @@ def get_full_image():
             start_of_line = go_down.get(start_of_line)
         
         image = np.array(image)
-        print(image)
+        # print(image)
 
         def trim_edges(arr):
             arr = arr[::-1] # TODO: Remove reverse
@@ -169,18 +167,45 @@ def get_full_image():
 
         return np.concatenate([ np.concatenate(row, axis=1) for row in full_image ], axis=0)
 
-def main():
-    full_image = get_full_image()
-    
-    for row in full_image:
+def pretty_print(im):
+    for row in im:
         print("".join(row))
+
+def main():
 
     monster = """
                   # 
 #    ##    ##    ###
  #  #  #  #  #  #   
-    """
+"""
 
+    monster_squares = sum( x == "#" for x in monster)
+    monster = [ list(line) for line in monster.strip("\n").splitlines() if line.strip(" ") != "" ]
+
+    monster = np.array(monster)
+
+    monster_height, monster_width = monster.shape
+    
+    
+    full_image = get_full_image()
+    
+    for transformed in transforms(full_image):
+        sightings = 0
+        
+        image_height, image_width = transformed.shape
+
+        for dy in range(0, image_height - monster_height + 1):
+            for dx in range(0, image_width - monster_width + 1):
+                sub_image = transformed[dy:dy+monster_height, dx:dx+monster_width]
+
+                if len( monster[monster == sub_image] ) == monster_squares:
+                    sightings += 1
+        if sightings > 1:
+            break
+    
+    non_monster_squares = len(full_image[full_image == "#"]) - (sightings * monster_squares)
+    print(non_monster_squares)
+    
 if __name__ == "__main__":
     main()
 
