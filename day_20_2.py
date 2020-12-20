@@ -18,7 +18,7 @@ def matches_left(arr1, arr2):
     return matches_right(arr2, arr1)
 
 def matches_down(arr1, arr2):
-    return (arr2[-1,:] == arr1[0,:]).all()
+    return (arr1[-1,:] == arr2[0,:]).all()
 
 def matches_up(arr1, arr2):
     return matches_down(arr2, arr1)
@@ -152,6 +152,14 @@ with open("inputs/day20.txt") as f:
             break
 
         start_of_line = go_down.get(start_of_line)
-        
+    
+    image = np.array(image)
+    print(image)
 
-    print(np.array(image))
+    full_image = [
+        [ (id, tiles_by_id[id].data) for id in row] for row in image
+    ]
+
+    print(full_image)
+    print(full_image.shape)
+    
