@@ -27,17 +27,15 @@ def matches_down(arr1, arr2):
 def matches_up(arr1, arr2):
     return matches_down(arr2, arr1)
 
-def make_transform(flip, rot):
-    def op(arr):
-        if flip:
-            arr = np.flip(arr, axis=1)
-        return np.rot90(arr, k=rot)
-    return op
+def do_transform(arr, flip, rot):
+    if flip:
+        arr = np.flip(arr, axis=1)
+    return np.rot90(arr, k=rot)
 
 def transforms(arr):
     for flip in [True, False]:
         for rot in [0, 1, 2, 3]:
-            yield make_transform(flip, rot)(arr)
+            yield do_transform(arr, flip, rot)
 
 def get_full_image():
     def get_adjacent_in_direction(tile, match_direction):
