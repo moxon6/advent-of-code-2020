@@ -3,13 +3,17 @@ from recordclass import recordclass
 
 Tile = recordclass('Tile', ['id', 'data'])
 
-def parse_tile_section(tile_sections):
+def parse_tile(tile_sections):
     title, *data = tile_sections.splitlines()
     tile_id = int( title.strip("Tile :") )
     return Tile(
         id = tile_id,
         data = np.array([list(line) for line in data])
     )
+
+def get_tiles(file_string):
+    tile_sections = file_string.split("\n\n")
+    return [ parse_tile(section) for section in tile_sections ]
 
 def matches_right(arr1, arr2):
     return (arr1[:,-1] == arr2[:,0]).all()
@@ -35,15 +39,10 @@ def transforms(arr):
         for rot in [0, 1, 2, 3]:
             yield make_transform(flip, rot)(arr)
 
-
-
-
 def get_full_image():
     def get_adjacent_in_direction(tile, match_direction):
 
-        for candidate in tiles:
-            if (tile is candidate):
-                continue
+        for candidate in filter(lambda t: tile is not t, tiles):
 
             if candidate.id in locked_in:
                 if match_direction(tile.data, candidate.data):
@@ -55,9 +54,7 @@ def get_full_image():
                         return candidate
 
     with open("inputs/day20.txt") as f:
-        
-        tile_sections = f.read().split("\n\n")
-        tiles = [ parse_tile_section(section) for section in tile_sections ]
+        tiles = get_tiles(f.read())
         match_directions = [matches_left, matches_right, matches_up, matches_down]
 
         def get_and_transform_adjacent_tiles(tile):
@@ -76,8 +73,8 @@ def get_full_image():
             for tile in tiles
         }
 
-        while len(frontier) > 0:
-
+        while len(locked_in) < len(tiles):
+            
             new_frontier = []
             
             for frontier_tile in frontier:
