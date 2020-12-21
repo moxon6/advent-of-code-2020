@@ -36,15 +36,15 @@ def transforms(arr):
 
 def get_adjacent_in_direction(tile, direction):
     for candidate in filter(lambda t: t is not tile and t not in locked_in, tiles):
-        for transform in transforms(gtd(candidate)):
-            if matchers.get(direction)(gtd(tile), transform):
+        for transform in transforms(tiles_by_id.get(candidate)):
+            if matchers.get(direction)(tiles_by_id.get(tile), transform):
                 tiles_by_id[candidate] = transform
                 return candidate
 
 
 def trim_edges(grid):
     return np.array([
-        [gtd(id)[1:-1, 1:-1] for id in row] for row in grid
+        [tiles_by_id.get(id)[1:-1, 1:-1] for id in row] for row in grid
     ])
 
 
@@ -144,7 +144,6 @@ def solve():
 
 with open("inputs/day20.txt") as f:
     tiles_by_id = get_tiles(f.read())
-    gtd = tiles_by_id.get
 
     tiles = list(tiles_by_id.keys())
     locked_in = {tiles[0]}
