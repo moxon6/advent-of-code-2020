@@ -87,7 +87,7 @@ def get_full_image():
         next_frontier = set()
 
         for frontier_tile in frontier:
-            for direction in [LEFT, RIGHT, UP, DOWN]:
+            for direction in matchers.keys():
                 if (adj := get_adjacent_in_direction(frontier_tile, direction)) is not None:
                     direction_map[frontier_tile][direction] = adj
                     direction_map[adj][-direction] = frontier_tile
