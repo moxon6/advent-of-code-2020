@@ -1,9 +1,11 @@
 import numpy as np
 from collections import defaultdict
 
+RIGHT, LEFT, DOWN, UP = 1, -1, 2, -2
+
 # id -> direction -> id | None
 direction_map = defaultdict(
-    lambda: {"left": None, "right": None, "up": None, "down": None}
+    lambda: {LEFT: None, RIGHT: None, UP: None, DOWN: None}
 )
 
 
@@ -38,7 +40,12 @@ def matches_up(arr1, arr2):
     return matches_down(arr2, arr1)
 
 
-match_directions = [matches_left, matches_right, matches_up, matches_down]
+match_directions = [
+    matches_left,
+    matches_right,
+    matches_up,
+    matches_down
+]
 
 
 def do_transform(arr, flip, rot):
@@ -69,6 +76,28 @@ def trim_edges(arr):
     return arr[1:-1, 1:-1]
 
 
+def get_id_grid(top_left):
+    start_of_line = top_left
+    image = []
+
+    while True:  # Do while
+        current_tile = start_of_line
+        image.append([start_of_line])
+
+        while True:  # Do while
+            current_tile = direction_map[current_tile][RIGHT]
+            image[-1].append(current_tile)
+            if direction_map[current_tile][RIGHT] is None:
+                break
+
+        if direction_map[current_tile][DOWN] is None:
+            break
+
+        start_of_line = direction_map[start_of_line][DOWN]
+
+    return np.array(image)
+
+
 def get_full_image():
     frontier = [tiles[0]]
 
@@ -80,50 +109,32 @@ def get_full_image():
             (left, right, up, down) = get_and_transform_adjacent_tiles(
                 frontier_tile)
             if left is not None and left not in locked_in:
-                direction_map[frontier_tile]["left"] = left
-                direction_map[left]["right"] = frontier_tile
+                direction_map[frontier_tile][LEFT] = left
+                direction_map[left][RIGHT] = frontier_tile
                 new_frontier.add(left)
             if right is not None and right not in locked_in:
-                direction_map[frontier_tile]["right"] = right
-                direction_map[right]["left"] = frontier_tile
+                direction_map[frontier_tile][RIGHT] = right
+                direction_map[right][LEFT] = frontier_tile
                 new_frontier.add(right)
             if up is not None and up not in locked_in:
-                direction_map[frontier_tile]["up"] = up
-                direction_map[up]["down"] = frontier_tile
+                direction_map[frontier_tile][UP] = up
+                direction_map[up][DOWN] = frontier_tile
                 new_frontier.add(up)
             if down is not None and down not in locked_in:
-                direction_map[frontier_tile]["down"] = down
-                direction_map[down]["up"] = frontier_tile
+                direction_map[frontier_tile][DOWN] = down
+                direction_map[down][UP] = frontier_tile
                 new_frontier.add(down)
 
         frontier = new_frontier
         locked_in.update(frontier)
 
     top_left = tiles[0]
-    while direction_map[top_left]["left"] is not None:
-        top_left = direction_map[top_left]["left"]
-    while direction_map[top_left]["up"] is not None:
-        top_left = direction_map[top_left]["up"]
+    while direction_map[top_left][LEFT] is not None:
+        top_left = direction_map[top_left][LEFT]
+    while direction_map[top_left][UP] is not None:
+        top_left = direction_map[top_left][UP]
 
-    start_of_line = top_left
-    image = []
-
-    while True:  # Do while
-        current_tile = start_of_line
-        image.append([start_of_line])
-
-        while True:  # Do while
-            current_tile = direction_map[current_tile]["right"]
-            image[-1].append(current_tile)
-            if direction_map[current_tile]["right"] is None:
-                break
-
-        if direction_map[current_tile]["down"] is None:
-            break
-
-        start_of_line = direction_map[start_of_line]["down"]
-
-    image = np.array(image)
+    image = get_id_grid(top_left)
 
     full_image = np.array([
         [trim_edges(gtd(id)) for id in row] for row in image
