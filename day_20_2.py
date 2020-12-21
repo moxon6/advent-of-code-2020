@@ -158,11 +158,10 @@ def get_full_image():
         # print(image)
 
         def trim_edges(arr):
-            arr = arr[::-1] # TODO: Remove reverse
             return arr[1:-1, 1:-1]
 
         full_image = np.array([
-            [ trim_edges(tiles_by_id[id].data) for id in row] for row in image[::-1] # TODO: Remove reverse
+            [ trim_edges(tiles_by_id[id].data) for id in row] for row in image
         ])
 
         return np.concatenate([ np.concatenate(row, axis=1) for row in full_image ], axis=0)
