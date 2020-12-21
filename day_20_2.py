@@ -101,9 +101,9 @@ def get_full_image():
     return np.concatenate([np.concatenate(row, axis=1) for row in full_image], axis=0)
 
 
-def get_sub_images(transformed, monster_shape):
+def get_sub_images(transformed, monster):
     image_height, image_width = transformed.shape
-    monster_height, monster_width = monster_shape
+    monster_height, monster_width = monster.shape
     for dy in range(0, image_height - monster_height + 1):
         for dx in range(0, image_width - monster_width + 1):
             yield transformed[dy:dy + monster_height, dx:dx+monster_width]
@@ -128,11 +128,12 @@ def solve():
         return len(monster[monster == sub_image]) == num_monster_squares
 
     for transformed in transforms(full_image):
-        sightings = 0
 
-        for sub_image in get_sub_images(transformed, monster.shape):
-            if is_sighting(sub_image):
-                sightings += 1
+        sightings = sum(map(
+            is_sighting,
+            get_sub_images(transformed, monster)
+        ))
+
         if sightings > 1:
             break
 
