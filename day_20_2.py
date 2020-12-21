@@ -87,7 +87,7 @@ def get_full_image():
         for frontier_tile in frontier:
             for direction in [LEFT, RIGHT, UP, DOWN]:
                 adj = get_adjacent_in_direction(frontier_tile, direction)
-                if adj is not None and adj not in locked_in:
+                if adj is not None:
                     direction_map[frontier_tile][direction] = adj
                     direction_map[adj][-direction] = frontier_tile
                     next_frontier.add(adj)
