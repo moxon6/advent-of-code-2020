@@ -42,16 +42,18 @@ def get_adjacent_in_direction(tile, direction):
                 return candidate
 
 
-def trim_edges(arr):
-    return arr[1:-1, 1:-1]
+def trim_edges(grid):
+    return np.array([
+        [gtd(id)[1:-1, 1:-1] for id in row] for row in grid
+    ])
 
 
 def get_top_left():
     top_left = tiles[0]
-    while direction_map[top_left][LEFT] is not None:
-        top_left = direction_map[top_left][LEFT]
-    while direction_map[top_left][UP] is not None:
-        top_left = direction_map[top_left][UP]
+    while (left := direction_map[top_left][LEFT]) is not None:
+        top_left = left
+    while (up := direction_map[top_left][UP]) is not None:
+        top_left = up
     return top_left
 
 
@@ -86,8 +88,7 @@ def get_full_image():
 
         for frontier_tile in frontier:
             for direction in [LEFT, RIGHT, UP, DOWN]:
-                adj = get_adjacent_in_direction(frontier_tile, direction)
-                if adj is not None:
+                if (adj := get_adjacent_in_direction(frontier_tile, direction)) is not None:
                     direction_map[frontier_tile][direction] = adj
                     direction_map[adj][-direction] = frontier_tile
                     next_frontier.add(adj)
@@ -95,11 +96,17 @@ def get_full_image():
         frontier = next_frontier
         locked_in.update(frontier)
 
-    full_image = np.array([
-        [trim_edges(gtd(id)) for id in row] for row in build_id_grid()
-    ])
+    full_image = trim_edges(build_id_grid())
 
     return np.concatenate([np.concatenate(row, axis=1) for row in full_image], axis=0)
+
+
+def get_sub_images(transformed, monster_shape):
+    image_height, image_width = transformed.shape
+    monster_height, monster_width = monster_shape
+    for dy in range(0, image_height - monster_height + 1):
+        for dx in range(0, image_width - monster_width + 1):
+            yield transformed[dy:dy + monster_height, dx:dx+monster_width]
 
 
 def solve():
@@ -110,33 +117,27 @@ def solve():
  #  #  #  #  #  #   
 """
 
-    monster_squares = sum(x == "#" for x in monster)
-    monster = [list(line) for line in monster.strip(
-        "\n").splitlines() if line.strip(" ") != ""]
-
-    monster = np.array(monster)
-
-    monster_height, monster_width = monster.shape
+    num_monster_squares = sum(x == "#" for x in monster)
+    monster = np.array([
+        list(line) for line in monster.splitlines() if line.strip(" ") != ""
+    ])
 
     full_image = get_full_image()
+
+    def is_sighting(sub_image):
+        return len(monster[monster == sub_image]) == num_monster_squares
 
     for transformed in transforms(full_image):
         sightings = 0
 
-        image_height, image_width = transformed.shape
-
-        for dy in range(0, image_height - monster_height + 1):
-            for dx in range(0, image_width - monster_width + 1):
-                sub_image = transformed[dy:dy +
-                                        monster_height, dx:dx+monster_width]
-
-                if len(monster[monster == sub_image]) == monster_squares:
-                    sightings += 1
+        for sub_image in get_sub_images(transformed, monster.shape):
+            if is_sighting(sub_image):
+                sightings += 1
         if sightings > 1:
             break
 
     non_monster_squares = len(
-        full_image[full_image == "#"]) - (sightings * monster_squares)
+        full_image[full_image == "#"]) - (sightings * num_monster_squares)
     print(non_monster_squares)
 
 
