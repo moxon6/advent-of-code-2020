@@ -41,11 +41,6 @@ def transforms(arr):
 def get_full_image():
     def get_adjacent_in_direction(tile, match_direction):
 
-        cache = function_to_cache[match_direction]
-        if tile.id in cache:
-            cached_tile_id = cache[tile.id]
-            return tiles_by_id[cached_tile_id]
-
         for candidate in tiles:
             if (tile is candidate):
                 continue
@@ -63,17 +58,6 @@ def get_full_image():
         
         tile_sections = f.read().split("\n\n")
         tiles = [ parse_tile_section(section) for section in tile_sections ]
-
-        def invert_cache(cache):
-            if cache == get_left:
-                return get_right
-            if cache == get_right:
-                return get_left
-            if cache == get_above:
-                return get_below
-            if cache == get_below:
-                return get_above
-
         match_directions = [matches_left, matches_right, matches_up, matches_down]
 
         def get_and_transform_adjacent_tiles(tile):
@@ -90,13 +74,6 @@ def get_full_image():
         tiles_by_id = {
             tile.id: tile 
             for tile in tiles
-        }
-
-        function_to_cache = {
-            matches_left: go_left,
-            matches_right: go_right,
-            matches_up: go_up,
-            matches_down: go_down
         }
 
         while len(frontier) > 0:
