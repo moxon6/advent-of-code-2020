@@ -1,5 +1,6 @@
 import numpy as np
 from collections import defaultdict
+import itertools
 
 RIGHT, LEFT, DOWN, UP = 1, -1, 2, -2
 
@@ -25,22 +26,12 @@ def parse_tile(tile_sections):
 
 
 def get_tiles(file_string):
-    return dict(map(
-        parse_tile,
-        file_string.split("\n\n")
-    ))
-
-
-def do_transform(arr, flip, rot):
-    if flip:
-        arr = np.flip(arr, axis=1)
-    return np.rot90(arr, k=rot)
+    return dict(map(parse_tile, file_string.split("\n\n")))
 
 
 def transforms(arr):
-    for flip in [True, False]:
-        for rot in [0, 1, 2, 3]:
-            yield do_transform(arr, flip, rot)
+    for (flip, rot) in itertools.product([True, False], [0, 1, 2, 3]):
+        yield np.rot90(np.flip(arr, axis=1) if flip else arr, k=rot)
 
 
 def get_adjacent_in_direction(tile, direction):
@@ -64,7 +55,7 @@ def get_top_left():
     return top_left
 
 
-def get_id_grid():
+def build_id_grid():
     start_of_line = get_top_left()
     image = []
 
@@ -105,7 +96,7 @@ def get_full_image():
         locked_in.update(frontier)
 
     full_image = np.array([
-        [trim_edges(gtd(id)) for id in row] for row in get_id_grid()
+        [trim_edges(gtd(id)) for id in row] for row in build_id_grid()
     ])
 
     return np.concatenate([np.concatenate(row, axis=1) for row in full_image], axis=0)
