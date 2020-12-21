@@ -4,11 +4,6 @@ import itertools
 
 RIGHT, LEFT, DOWN, UP = 1, -1, 2, -2
 
-# id -> direction -> id | None
-direction_map = defaultdict(
-    lambda: {LEFT: None, RIGHT: None, UP: None, DOWN: None}
-)
-
 matchers = {
     LEFT: lambda arr1, arr2: (arr2[:, -1] == arr1[:, 0]).all(),
     RIGHT: lambda arr1, arr2: (arr1[:, -1] == arr2[:, 0]).all(),
@@ -35,7 +30,7 @@ def transforms(arr):
 
 
 def get_adjacent_in_direction(tile, direction):
-    for candidate in filter(lambda t: t is not tile and t not in locked_in, tiles):
+    for candidate in filter(lambda t: t is not tile, tiles):
         for transform in transforms(tiles_by_id.get(candidate)):
             if matchers.get(direction)(tiles_by_id.get(tile), transform):
                 tiles_by_id[candidate] = transform
@@ -50,9 +45,9 @@ def trim_edges(grid):
 
 def get_top_left():
     top_left = tiles[0]
-    while (left := direction_map[top_left][LEFT]) is not None:
+    while (left := get_adjacent_in_direction(top_left, LEFT)) is not None:
         top_left = left
-    while (up := direction_map[top_left][UP]) is not None:
+    while (up := get_adjacent_in_direction(top_left, UP)) is not None:
         top_left = up
     return top_left
 
@@ -66,38 +61,21 @@ def build_id_grid():
         image.append([start_of_line])
 
         while True:  # Do while
-            current_tile = direction_map[current_tile][RIGHT]
+            current_tile = get_adjacent_in_direction(current_tile, RIGHT)
             image[-1].append(current_tile)
-            if direction_map[current_tile][RIGHT] is None:
+            if get_adjacent_in_direction(current_tile, RIGHT) is None:
                 break
 
-        if direction_map[current_tile][DOWN] is None:
+        if get_adjacent_in_direction(current_tile, DOWN) is None:
             break
 
-        start_of_line = direction_map[start_of_line][DOWN]
+        start_of_line = get_adjacent_in_direction(start_of_line, DOWN)
 
     return np.array(image)
 
 
 def get_full_image():
-    frontier = {tiles[0]}
-
-    while len(locked_in) < len(tiles):
-
-        next_frontier = set()
-
-        for frontier_tile in frontier:
-            for direction in matchers.keys():
-                if (adj := get_adjacent_in_direction(frontier_tile, direction)) is not None:
-                    direction_map[frontier_tile][direction] = adj
-                    direction_map[adj][-direction] = frontier_tile
-                    next_frontier.add(adj)
-
-        frontier = next_frontier
-        locked_in.update(frontier)
-
     full_image = trim_edges(build_id_grid())
-
     return np.concatenate([np.concatenate(row, axis=1) for row in full_image], axis=0)
 
 
