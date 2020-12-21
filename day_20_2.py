@@ -1,18 +1,25 @@
 import numpy as np
+from collections import defaultdict
+
+# id -> direction -> id | None
+direction_map = defaultdict(
+    lambda: {"left": None, "right": None, "up": None, "down": None}
+)
 
 
 def parse_tile(tile_sections):
     title, *data = tile_sections.splitlines()
-    tile_id = int(title.strip("Tile :"))
     return (
-        tile_id,
+        int(title.strip("Tile :")),
         np.array([list(line) for line in data])
     )
 
 
 def get_tiles(file_string):
-    tile_sections = file_string.split("\n\n")
-    return dict(parse_tile(section) for section in tile_sections)
+    return dict(map(
+        parse_tile,
+        file_string.split("\n\n")
+    ))
 
 
 def matches_right(arr1, arr2):
@@ -31,6 +38,9 @@ def matches_up(arr1, arr2):
     return matches_down(arr2, arr1)
 
 
+match_directions = [matches_left, matches_right, matches_up, matches_down]
+
+
 def do_transform(arr, flip, rot):
     if flip:
         arr = np.flip(arr, axis=1)
@@ -43,105 +53,87 @@ def transforms(arr):
             yield do_transform(arr, flip, rot)
 
 
+def get_adjacent_in_direction(tile, match_direction):
+    for candidate in filter(lambda t: tile is not t, tiles):
+        if candidate in locked_in:
+            if match_direction(gtd(tile), gtd(candidate)):
+                return candidate
+        else:
+            for transform in transforms(gtd(candidate)):
+                if match_direction(gtd(tile), transform):
+                    tiles_by_id[candidate] = transform
+                    return candidate
+
+
+def get_and_transform_adjacent_tiles(tile):
+    return [get_adjacent_in_direction(tile, direction) for direction in match_directions]
+
+
+def trim_edges(arr):
+    return arr[1:-1, 1:-1]
+
+
 def get_full_image():
-    with open("inputs/day20.txt") as f:
-        def get_adjacent_in_direction(tile, match_direction):
-            for candidate in filter(lambda t: tile is not t, tiles):
-                if candidate in locked_in:
-                    if match_direction(gtd(tile), gtd(candidate)):
-                        return candidate
-                else:
-                    for transform in transforms(gtd(candidate)):
-                        if match_direction(gtd(tile), transform):
-                            tiles_by_id[candidate] = transform
-                            return candidate
+    frontier = [tiles[0]]
 
-        def get_and_transform_adjacent_tiles(tile):
-            return [get_adjacent_in_direction(tile, direction) for direction in match_directions]
+    while len(locked_in) < len(tiles):
 
-        tiles_by_id = get_tiles(f.read())
-        match_directions = [matches_left,
-                            matches_right, matches_up, matches_down]
+        new_frontier = set()
 
-        go_left = {}
-        go_right = {}
-        go_up = {}
-        go_down = {}
+        for frontier_tile in frontier:
+            (left, right, up, down) = get_and_transform_adjacent_tiles(
+                frontier_tile)
+            if left is not None and left not in locked_in:
+                direction_map[frontier_tile]["left"] = left
+                direction_map[left]["right"] = frontier_tile
+                new_frontier.add(left)
+            if right is not None and right not in locked_in:
+                direction_map[frontier_tile]["right"] = right
+                direction_map[right]["left"] = frontier_tile
+                new_frontier.add(right)
+            if up is not None and up not in locked_in:
+                direction_map[frontier_tile]["up"] = up
+                direction_map[up]["down"] = frontier_tile
+                new_frontier.add(up)
+            if down is not None and down not in locked_in:
+                direction_map[frontier_tile]["down"] = down
+                direction_map[down]["up"] = frontier_tile
+                new_frontier.add(down)
 
-        tiles = list(tiles_by_id.keys())
+        frontier = new_frontier
+        locked_in.update(frontier)
 
-        gtd = tiles_by_id.get
+    top_left = tiles[0]
+    while direction_map[top_left]["left"] is not None:
+        top_left = direction_map[top_left]["left"]
+    while direction_map[top_left]["up"] is not None:
+        top_left = direction_map[top_left]["up"]
 
-        locked_in = {tiles[0]}
-        frontier = [tiles[0]]
+    start_of_line = top_left
+    image = []
 
-        while len(locked_in) < len(tiles):
-
-            new_frontier = []
-
-            for frontier_tile in frontier:
-                (left, right, up, down) = get_and_transform_adjacent_tiles(
-                    frontier_tile)
-                if left is not None and left not in locked_in:
-                    go_left[frontier_tile] = left
-                    go_right[left] = frontier_tile
-                    if left not in new_frontier:
-                        new_frontier.append(left)
-                if right is not None and right not in locked_in:
-                    go_right[frontier_tile] = right
-                    go_left[right] = frontier_tile
-                    if right not in new_frontier:
-                        new_frontier.append(right)
-                if up is not None and up not in locked_in:
-                    go_up[frontier_tile] = up
-                    go_down[up] = frontier_tile
-                    if up not in new_frontier:
-                        new_frontier.append(up)
-                if down is not None and down not in locked_in:
-                    go_down[frontier_tile] = down
-                    go_up[down] = frontier_tile
-                    if down not in new_frontier:
-                        new_frontier.append(down)
-
-            frontier = new_frontier
-            for f in new_frontier:
-                locked_in.add(f)
-
-        top_left = tiles[0]
-        while go_left.get(top_left, None) is not None:
-            top_left = go_left.get(top_left)
-        while go_up.get(top_left, None) is not None:
-            top_left = go_up.get(top_left)
-
-        start_of_line = top_left
-        image = []
+    while True:  # Do while
+        current_tile = start_of_line
+        image.append([start_of_line])
 
         while True:  # Do while
-            current_tile = start_of_line
-            image.append([start_of_line])
-
-            while True:  # Do while
-                current_tile = go_right.get(current_tile)
-                image[-1].append(current_tile)
-                if go_right.get(current_tile, None) is None:
-                    break
-
-            if go_down.get(start_of_line, None) is None:
+            current_tile = direction_map[current_tile]["right"]
+            image[-1].append(current_tile)
+            if direction_map[current_tile]["right"] is None:
                 break
 
-            start_of_line = go_down.get(start_of_line)
+        if direction_map[current_tile]["down"] is None:
+            break
 
-        image = np.array(image)
-        # print(image)
+        start_of_line = direction_map[start_of_line]["down"]
 
-        def trim_edges(arr):
-            return arr[1:-1, 1:-1]
+    image = np.array(image)
 
-        full_image = np.array([
-            [trim_edges(gtd(id)) for id in row] for row in image
-        ])
+    full_image = np.array([
+        [trim_edges(gtd(id)) for id in row] for row in image
+    ])
 
-        return np.concatenate([np.concatenate(row, axis=1) for row in full_image], axis=0)
+    return np.concatenate([np.concatenate(row, axis=1) for row in full_image], axis=0)
 
 
 def pretty_print(im):
@@ -188,4 +180,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with open("inputs/day20.txt") as f:
+        tiles_by_id = get_tiles(f.read())
+        gtd = tiles_by_id.get
+
+        tiles = list(tiles_by_id.keys())
+        locked_in = {tiles[0]}
+
+        main()
