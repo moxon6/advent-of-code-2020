@@ -24,28 +24,12 @@ def get_tiles(file_string):
     ))
 
 
-def matches_right(arr1, arr2):
-    return (arr1[:, -1] == arr2[:, 0]).all()
-
-
-def matches_left(arr1, arr2):
-    return matches_right(arr2, arr1)
-
-
-def matches_down(arr1, arr2):
-    return (arr1[-1, :] == arr2[0, :]).all()
-
-
-def matches_up(arr1, arr2):
-    return matches_down(arr2, arr1)
-
-
-match_directions = [
-    matches_left,
-    matches_right,
-    matches_up,
-    matches_down
-]
+get_matcher = {
+    LEFT: lambda arr1, arr2: (arr2[:, -1] == arr1[:, 0]).all(),
+    RIGHT: lambda arr1, arr2: (arr1[:, -1] == arr2[:, 0]).all(),
+    UP: lambda arr1, arr2: (arr2[-1, :] == arr1[0, :]).all(),
+    DOWN: lambda arr1, arr2: (arr1[-1, :] == arr2[0, :]).all()
+}
 
 
 def do_transform(arr, flip, rot):
@@ -60,16 +44,16 @@ def transforms(arr):
             yield do_transform(arr, flip, rot)
 
 
-def get_adjacent_in_direction(tile, match_direction):
+def get_adjacent_in_direction(tile, direction):
     for candidate in filter(lambda t: t is not tile and t not in locked_in, tiles):
         for transform in transforms(gtd(candidate)):
-            if match_direction(gtd(tile), transform):
+            if get_matcher[direction](gtd(tile), transform):
                 tiles_by_id[candidate] = transform
                 return candidate
 
 
 def get_and_transform_adjacent_tiles(tile):
-    return [get_adjacent_in_direction(tile, direction) for direction in match_directions]
+    return [get_adjacent_in_direction(tile, direction) for direction in [LEFT, RIGHT, UP, DOWN]]
 
 
 def trim_edges(arr):
