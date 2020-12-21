@@ -54,15 +54,11 @@ def transforms(arr):
 
 
 def get_adjacent_in_direction(tile, match_direction):
-    for candidate in filter(lambda t: tile is not t, tiles):
-        if candidate in locked_in:
-            if match_direction(gtd(tile), gtd(candidate)):
+    for candidate in filter(lambda t: t is not tile and t not in locked_in, tiles):
+        for transform in transforms(gtd(candidate)):
+            if match_direction(gtd(tile), transform):
+                tiles_by_id[candidate] = transform
                 return candidate
-        else:
-            for transform in transforms(gtd(candidate)):
-                if match_direction(gtd(tile), transform):
-                    tiles_by_id[candidate] = transform
-                    return candidate
 
 
 def get_and_transform_adjacent_tiles(tile):
