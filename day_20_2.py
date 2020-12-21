@@ -8,6 +8,13 @@ direction_map = defaultdict(
     lambda: {LEFT: None, RIGHT: None, UP: None, DOWN: None}
 )
 
+matchers = {
+    LEFT: lambda arr1, arr2: (arr2[:, -1] == arr1[:, 0]).all(),
+    RIGHT: lambda arr1, arr2: (arr1[:, -1] == arr2[:, 0]).all(),
+    UP: lambda arr1, arr2: (arr2[-1, :] == arr1[0, :]).all(),
+    DOWN: lambda arr1, arr2: (arr1[-1, :] == arr2[0, :]).all()
+}
+
 
 def parse_tile(tile_sections):
     title, *data = tile_sections.splitlines()
@@ -22,14 +29,6 @@ def get_tiles(file_string):
         parse_tile,
         file_string.split("\n\n")
     ))
-
-
-get_matcher = {
-    LEFT: lambda arr1, arr2: (arr2[:, -1] == arr1[:, 0]).all(),
-    RIGHT: lambda arr1, arr2: (arr1[:, -1] == arr2[:, 0]).all(),
-    UP: lambda arr1, arr2: (arr2[-1, :] == arr1[0, :]).all(),
-    DOWN: lambda arr1, arr2: (arr1[-1, :] == arr2[0, :]).all()
-}
 
 
 def do_transform(arr, flip, rot):
@@ -47,21 +46,26 @@ def transforms(arr):
 def get_adjacent_in_direction(tile, direction):
     for candidate in filter(lambda t: t is not tile and t not in locked_in, tiles):
         for transform in transforms(gtd(candidate)):
-            if get_matcher[direction](gtd(tile), transform):
+            if matchers.get(direction)(gtd(tile), transform):
                 tiles_by_id[candidate] = transform
                 return candidate
-
-
-def get_and_transform_adjacent_tiles(tile):
-    return [get_adjacent_in_direction(tile, direction) for direction in [LEFT, RIGHT, UP, DOWN]]
 
 
 def trim_edges(arr):
     return arr[1:-1, 1:-1]
 
 
-def get_id_grid(top_left):
-    start_of_line = top_left
+def get_top_left():
+    top_left = tiles[0]
+    while direction_map[top_left][LEFT] is not None:
+        top_left = direction_map[top_left][LEFT]
+    while direction_map[top_left][UP] is not None:
+        top_left = direction_map[top_left][UP]
+    return top_left
+
+
+def get_id_grid():
+    start_of_line = get_top_left()
     image = []
 
     while True:  # Do while
@@ -83,56 +87,31 @@ def get_id_grid(top_left):
 
 
 def get_full_image():
-    frontier = [tiles[0]]
+    frontier = {tiles[0]}
 
     while len(locked_in) < len(tiles):
 
-        new_frontier = set()
+        next_frontier = set()
 
         for frontier_tile in frontier:
-            (left, right, up, down) = get_and_transform_adjacent_tiles(
-                frontier_tile)
-            if left is not None and left not in locked_in:
-                direction_map[frontier_tile][LEFT] = left
-                direction_map[left][RIGHT] = frontier_tile
-                new_frontier.add(left)
-            if right is not None and right not in locked_in:
-                direction_map[frontier_tile][RIGHT] = right
-                direction_map[right][LEFT] = frontier_tile
-                new_frontier.add(right)
-            if up is not None and up not in locked_in:
-                direction_map[frontier_tile][UP] = up
-                direction_map[up][DOWN] = frontier_tile
-                new_frontier.add(up)
-            if down is not None and down not in locked_in:
-                direction_map[frontier_tile][DOWN] = down
-                direction_map[down][UP] = frontier_tile
-                new_frontier.add(down)
+            for direction in [LEFT, RIGHT, UP, DOWN]:
+                adj = get_adjacent_in_direction(frontier_tile, direction)
+                if adj is not None and adj not in locked_in:
+                    direction_map[frontier_tile][direction] = adj
+                    direction_map[adj][-direction] = frontier_tile
+                    next_frontier.add(adj)
 
-        frontier = new_frontier
+        frontier = next_frontier
         locked_in.update(frontier)
 
-    top_left = tiles[0]
-    while direction_map[top_left][LEFT] is not None:
-        top_left = direction_map[top_left][LEFT]
-    while direction_map[top_left][UP] is not None:
-        top_left = direction_map[top_left][UP]
-
-    image = get_id_grid(top_left)
-
     full_image = np.array([
-        [trim_edges(gtd(id)) for id in row] for row in image
+        [trim_edges(gtd(id)) for id in row] for row in get_id_grid()
     ])
 
     return np.concatenate([np.concatenate(row, axis=1) for row in full_image], axis=0)
 
 
-def pretty_print(im):
-    for row in im:
-        print("".join(row))
-
-
-def main():
+def solve():
 
     monster = """
                   # 
@@ -170,12 +149,11 @@ def main():
     print(non_monster_squares)
 
 
-if __name__ == "__main__":
-    with open("inputs/day20.txt") as f:
-        tiles_by_id = get_tiles(f.read())
-        gtd = tiles_by_id.get
+with open("inputs/day20.txt") as f:
+    tiles_by_id = get_tiles(f.read())
+    gtd = tiles_by_id.get
 
-        tiles = list(tiles_by_id.keys())
-        locked_in = {tiles[0]}
+    tiles = list(tiles_by_id.keys())
+    locked_in = {tiles[0]}
 
-        main()
+    solve()
