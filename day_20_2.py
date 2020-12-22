@@ -10,6 +10,12 @@ matchers = {
     DOWN: lambda arr1, arr2: (arr1[-1, :] == arr2[0, :]).all()
 }
 
+monster_string = """
+                  # 
+#    ##    ##    ###
+ #  #  #  #  #  #   
+"""
+
 
 def parse_tile(tile_sections):
     title, *data = tile_sections.splitlines()
@@ -52,17 +58,17 @@ def get_top_left():
 
 
 def build_id_grid():
-    image = []
+    id_grid = []
     start_of_line = get_top_left()
 
     while start_of_line is not None:
-        image.append([])
+        id_grid.append([])
         current_tile = start_of_line
         while current_tile is not None:
-            image[-1].append(current_tile)
+            id_grid[-1].append(current_tile)
             current_tile = get_adjacent_in_direction(current_tile, RIGHT)
         start_of_line = get_adjacent_in_direction(start_of_line, DOWN)
-    return np.array(image)
+    return np.array(id_grid)
 
 
 def get_full_image():
@@ -79,23 +85,15 @@ def get_sub_images(transformed, monster):
 
 
 def solve():
-
-    monster = """
-                  # 
-#    ##    ##    ###
- #  #  #  #  #  #   
-"""
-
-    num_monster_squares = sum(x == "#" for x in monster)
+    num_monster_squares = sum(x == "#" for x in monster_string)
     monster = np.array([
-        list(line) for line in monster.splitlines() if line.strip(" ") != ""
+        list(line) for line in monster_string.splitlines() if line.strip(" ") != ""
     ])
-
-    full_image = get_full_image()
 
     def is_sighting(sub_image):
         return len(monster[monster == sub_image]) == num_monster_squares
 
+    full_image = get_full_image()
     for transformed in transforms(full_image):
 
         sightings = sum(map(
@@ -104,11 +102,9 @@ def solve():
         ))
 
         if sightings > 1:
-            break
-
-    non_monster_squares = len(
-        full_image[full_image == "#"]) - (sightings * num_monster_squares)
-    print(non_monster_squares)
+            non_monster_squares = len(
+                full_image[full_image == "#"]) - (sightings * num_monster_squares)
+            print(non_monster_squares)
 
 
 with open("inputs/day20.txt") as f:
