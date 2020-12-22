@@ -73,12 +73,12 @@ def get_full_image():
     return np.concatenate([np.concatenate(row, axis=1) for row in full_image], axis=0)
 
 
-def get_sub_images(transformed, monster):
-    image_height, image_width = transformed.shape
+def get_sub_images(image, monster):
+    image_height, image_width = image.shape
     monster_height, monster_width = monster.shape
-    for dy in range(0, image_height - monster_height + 1):
-        for dx in range(0, image_width - monster_width + 1):
-            yield transformed[dy:dy + monster_height, dx:dx+monster_width]
+
+    for (dx, dy) in itertools.product(range(image_width - monster_width + 1), range(image_height - monster_height + 1)):
+        yield image[dy:dy + monster_height, dx:dx+monster_width]
 
 
 def solve():
