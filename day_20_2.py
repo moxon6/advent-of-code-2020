@@ -1,5 +1,4 @@
 import numpy as np
-from collections import defaultdict
 import itertools
 
 RIGHT, LEFT, DOWN, UP = 1, 2, 3, 4
