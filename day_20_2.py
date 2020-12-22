@@ -2,7 +2,7 @@ import numpy as np
 from collections import defaultdict
 import itertools
 
-RIGHT, LEFT, DOWN, UP = 1, -1, 2, -2
+RIGHT, LEFT, DOWN, UP = 1, 2, 3, 4
 
 matchers = {
     LEFT: lambda arr1, arr2: (arr2[:, -1] == arr1[:, 0]).all(),
