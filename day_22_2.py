@@ -11,19 +11,42 @@ with open("inputs/day22.txt") as f:
     deck_1, deck_2 = get_decks(f.read())
 
     def do_game(d1, d2):
+        previous_configurations = set()
+
         while len(d1) > 0 and len(d2) > 0:
-            card_1, card_2 = d1.popleft(), d2.popleft()
-            if card_1 > card_2:
-                d1.append(card_1)
-                d1.append(card_2)
+
+            if (conf := (tuple(d1), tuple(d2))) in previous_configurations:
+                return d1, d2, 1  # Prevent loops
             else:
-                d2.append(card_2)
-                d2.append(card_1)
-        winner = 1 if len(deck_1) > 0 else 2
+                previous_configurations.add(conf)
+
+            card_1, card_2 = d1.popleft(), d2.popleft()
+
+            if len(d1) >= card_1 and len(d2) >= card_2:
+                d1_sub = deque(list(d1)[:card_1])
+                d2_sub = deque(list(d2)[:card_2])
+                _, _, winner = do_game(d1_sub, d2_sub)
+
+                if winner == 1:
+                    d1.append(card_1)
+                    d1.append(card_2)
+                else:
+                    d2.append(card_2)
+                    d2.append(card_1)
+            else:
+                if card_1 > card_2:
+                    d1.append(card_1)
+                    d1.append(card_2)
+                else:
+                    d2.append(card_2)
+                    d2.append(card_1)
+
+        winner = 1 if len(d1) > 0 else 2
 
         return d1, d2, winner
 
     deck_1, deck_2, winner = do_game(deck_1, deck_2)
-    winning_deck = (deck_1, deck_1)[winner - 1]
+    winning_deck = (deck_1, deck_2)[winner - 1]
+
     score = sum((i + 1) * x for i, x in enumerate(reversed(winning_deck)))
     print(score)
