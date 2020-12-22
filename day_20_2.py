@@ -2,14 +2,12 @@ import numpy as np
 import itertools
 
 RIGHT, LEFT, DOWN, UP = 1, 2, 3, 4
-
 matchers = {
     LEFT: lambda arr1, arr2: (arr2[:, -1] == arr1[:, 0]).all(),
     RIGHT: lambda arr1, arr2: (arr1[:, -1] == arr2[:, 0]).all(),
     UP: lambda arr1, arr2: (arr2[-1, :] == arr1[0, :]).all(),
     DOWN: lambda arr1, arr2: (arr1[-1, :] == arr2[0, :]).all()
 }
-
 monster_string = """
                   # 
 #    ##    ##    ###
@@ -60,7 +58,6 @@ def get_top_left():
 def build_id_grid():
     id_grid = []
     start_of_line = get_top_left()
-
     while start_of_line is not None:
         id_grid.append([])
         current_tile = start_of_line
@@ -92,15 +89,12 @@ def solve():
 
     def is_sighting(sub_image):
         return len(monster[monster == sub_image]) == num_monster_squares
-
     full_image = get_full_image()
     for transformed in transforms(full_image):
-
         sightings = sum(map(
             is_sighting,
             get_sub_images(transformed, monster)
         ))
-
         if sightings > 1:
             non_monster_squares = len(
                 full_image[full_image == "#"]) - (sightings * num_monster_squares)
