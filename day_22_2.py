@@ -16,7 +16,7 @@ with open("inputs/day22.txt") as f:
         while len(d1) > 0 and len(d2) > 0:
 
             if (conf := (tuple(d1), tuple(d2))) in previous_configurations:
-                return d1, d2, 1  # Prevent loops
+                return d1, 1  # Prevent loops
             else:
                 previous_configurations.add(conf)
 
@@ -25,28 +25,20 @@ with open("inputs/day22.txt") as f:
             if len(d1) >= card_1 and len(d2) >= card_2:
                 d1_sub = deque(list(d1)[:card_1])
                 d2_sub = deque(list(d2)[:card_2])
-                _, _, winner = do_game(d1_sub, d2_sub)
-
-                if winner == 1:
-                    d1.append(card_1)
-                    d1.append(card_2)
-                else:
-                    d2.append(card_2)
-                    d2.append(card_1)
+                _, round_winner = do_game(d1_sub, d2_sub)
             else:
-                if card_1 > card_2:
-                    d1.append(card_1)
-                    d1.append(card_2)
-                else:
-                    d2.append(card_2)
-                    d2.append(card_1)
+                round_winner = 1 if card_1 > card_2 else 2
 
-        winner = 1 if len(d1) > 0 else 2
+            if round_winner == 1:
+                d1.append(card_1)
+                d1.append(card_2)
+            else:
+                d2.append(card_2)
+                d2.append(card_1)
 
-        return d1, d2, winner
+        return d1 if len(d1) > 0 else d2, 1 if len(d1) > 0 else 2
 
-    deck_1, deck_2, winner = do_game(deck_1, deck_2)
-    winning_deck = (deck_1, deck_2)[winner - 1]
+    winning_deck, _ = do_game(deck_1, deck_2)
 
     score = sum((i + 1) * x for i, x in enumerate(reversed(winning_deck)))
     print(score)
