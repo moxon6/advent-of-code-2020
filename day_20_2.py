@@ -47,12 +47,12 @@ def trim_edges(grid):
 
 
 def get_top_left():
-    top_left = tiles[0]
-    while (left := get_adjacent_in_direction(top_left, LEFT)) is not None:
-        top_left = left
-    while (up := get_adjacent_in_direction(top_left, UP)) is not None:
-        top_left = up
-    return top_left
+    position = tiles[0]
+    while (left := get_adjacent_in_direction(position, LEFT)) is not None:
+        position = left
+    while (up := get_adjacent_in_direction(position, UP)) is not None:
+        position = up
+    return position
 
 
 def build_id_grid():
