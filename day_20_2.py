@@ -109,8 +109,5 @@ def solve():
 
 with open("inputs/day20.txt") as f:
     tiles_by_id = get_tiles(f.read())
-
     tiles = list(tiles_by_id.keys())
-    locked_in = {tiles[0]}
-
     solve()
