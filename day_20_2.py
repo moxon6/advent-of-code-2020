@@ -53,24 +53,16 @@ def get_top_left():
 
 
 def build_id_grid():
-    start_of_line = get_top_left()
     image = []
+    start_of_line = get_top_left()
 
-    while True:  # Do while
+    while start_of_line is not None:
+        image.append([])
         current_tile = start_of_line
-        image.append([start_of_line])
-
-        while True:  # Do while
-            current_tile = get_adjacent_in_direction(current_tile, RIGHT)
+        while current_tile is not None:
             image[-1].append(current_tile)
-            if get_adjacent_in_direction(current_tile, RIGHT) is None:
-                break
-
-        if get_adjacent_in_direction(current_tile, DOWN) is None:
-            break
-
+            current_tile = get_adjacent_in_direction(current_tile, RIGHT)
         start_of_line = get_adjacent_in_direction(start_of_line, DOWN)
-
     return np.array(image)
 
 
