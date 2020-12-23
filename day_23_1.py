@@ -1,67 +1,61 @@
+from llist import dllist
+
 NUM_MOVES = 100
-
-
-def separate_next_three(cups, current_cup):
-    current_cup_index = cups.index(current_cup)
-    next_indices = [
-        i % len(cups)
-        for i in range(current_cup_index + 1, current_cup_index + 4)
-    ]
-
-    assert len(next_indices) == 3
-
-    return [x for (i, x) in enumerate(cups) if i not in next_indices], [cups[i] for i in next_indices]
+NUM_CUPS = 9
 
 
 def wrap_decrement(x):
-    return 1 + ((x-2) % 9)
+    return 1 + ((x-2) % NUM_CUPS)
 
 
-def get_destination_cup(current_cup, next_three):
-    destination = wrap_decrement(current_cup)
+def get_destination_cup_value(current_cup_value, next_three):
+    destination = wrap_decrement(current_cup_value)
     while destination in next_three:
         destination = wrap_decrement(destination)
 
     return destination
 
 
+def get_next_cup(cup):
+    if cup == cup.owner().last:
+        return cup.owner().first
+    else:
+        return cup.next
+
+
 with open("inputs/day23.txt") as f:
-    cups = [int(x) for x in f.readline()]
-    current_cup = cups[0]
+    cups = dllist([int(x) for x in f.readline()])
+
+    value_to_node = {x: cups.nodeat(i) for i, x in enumerate(cups)}
+
+    current_cup = cups.first
 
     for move in range(NUM_MOVES):
 
-        print("Move number", move + 1)
-        print("Cups", cups)
-        print("Current cup", current_cup)
+        next_1 = get_next_cup(current_cup)
+        next_2 = get_next_cup(next_1)
+        next_3 = get_next_cup(next_2)
 
-        initial_length = len(cups)
+        cups.remove(next_1)
+        cups.remove(next_2)
+        cups.remove(next_3)
 
-        remaining_cups, next_three = separate_next_three(
-            cups,
-            current_cup
+        destination_cup_value = get_destination_cup_value(
+            current_cup.value,
+            [next_1.value, next_2.value, next_3.value]
         )
 
-        destination_cup = get_destination_cup(
-            current_cup,
-            next_three
-        )
-        print("Next three cups", next_three)
-        print("Destination", destination_cup, "\n\n")
+        destination_cup_node = value_to_node[destination_cup_value]
 
-        destination_index = remaining_cups.index(destination_cup)
-        cups = [
-            *remaining_cups[:destination_index + 1],
-            *next_three,
-            *remaining_cups[destination_index+1:]
-        ]
+        cups.insertnode(next_1, get_next_cup(destination_cup_node))
+        cups.insertnode(next_2, next_1.next)
+        cups.insertnode(next_3, next_2.next)
 
-        current_cup_index = (cups.index(current_cup) + 1) % len(cups)
-        current_cup = cups[current_cup_index]
-    print("Final cups", cups)
+        current_cup = get_next_cup(current_cup)
 
-    start_index = cups.index(1)
-    digits = [
-        cups[i % 9] for i in range(start_index + 1, start_index + 9)
-    ]
+    digits = []
+    current_node = value_to_node[1]
+    while ((current_node := get_next_cup(current_node)) != value_to_node[1]):
+        digits.append(current_node.value)
+
     print("Solution:", "".join(str(x) for x in digits))
