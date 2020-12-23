@@ -5,61 +5,54 @@ NUM_CUPS = 1000 * 1000
 
 
 def wrap_decrement(x):
-    return 1 + ((x-2) % NUM_CUPS)
+    return x - 1 if x > 1 else NUM_CUPS
 
 
-def get_destination_cup_value(current_cup_value, next_three):
-    destination = wrap_decrement(current_cup_value)
-    while destination in next_three:
-        destination = wrap_decrement(destination)
-
-    return destination
+def get_destination_cup(current_cup, next_three):
+    destination_value = wrap_decrement(current_cup.value)
+    while destination_value in {x.value for x in next_three}:
+        destination_value = wrap_decrement(destination_value)
+    return value_to_node[destination_value]
 
 
 def get_next_cup(cup):
-    if cup == cup.owner().last:
-        return cup.owner().first
-    else:
-        return cup.next
+    return cup.next if cup.next else cup.owner().first
 
 
-with open("inputs/day23.txt") as f:
-    cups = [int(x) for x in f.readline()]
-    cups.extend(range(len(cups) + 1, NUM_CUPS + 1))
-    cups = dllist(cups)
+def get_next_three_cups(cup):
+    next_1 = get_next_cup(cup)
+    next_2 = get_next_cup(next_1)
+    next_3 = get_next_cup(next_2)
+    return [next_1, next_2, next_3]
 
-    value_to_node = {x: cups.nodeat(i) for i, x in enumerate(cups)}
 
-    current_cup = cups.first
+def get_cups():
+    with open("inputs/day23.txt") as f:
+        cups = [int(x) for x in f.readline()]
+        cups.extend(range(len(cups) + 1, NUM_CUPS + 1))
+        return dllist(cups)
 
-    for move in range(NUM_MOVES):
 
-        if (move % (1000 * 1000 * 0.25) == 0):
-            print(move)
+cups = get_cups()
+value_to_node = {x: cups.nodeat(i) for i, x in enumerate(cups)}
 
-        next_1 = get_next_cup(current_cup)
-        next_2 = get_next_cup(next_1)
-        next_3 = get_next_cup(next_2)
+current_cup = cups.first
+for move in range(NUM_MOVES):
+    next_cups = get_next_three_cups(current_cup)
 
-        cups.remove(next_1)
-        cups.remove(next_2)
-        cups.remove(next_3)
+    for cup in next_cups:
+        cups.remove(cup)
 
-        destination_cup_value = get_destination_cup_value(
-            current_cup.value,
-            [next_1.value, next_2.value, next_3.value]
-        )
+    insert_after = get_destination_cup(current_cup, next_cups)
 
-        destination_cup_node = value_to_node[destination_cup_value]
+    for cup in next_cups:
+        insert_after = cups.insertnode(cup, get_next_cup(insert_after))
 
-        cups.insertnode(next_1, get_next_cup(destination_cup_node))
-        cups.insertnode(next_2, next_1.next)
-        cups.insertnode(next_3, next_2.next)
+    current_cup = get_next_cup(current_cup)
 
-        current_cup = get_next_cup(current_cup)
+one_node = value_to_node[1]
 
-    one_node = value_to_node[1]
+after_one = get_next_cup(one_node)
+after_two = get_next_cup(after_one)
 
-    result = one_node.next.value * one_node.next.next.value
-
-    print("Solution:", result)
+print("Solution:", after_one.value * after_two.value)
