@@ -9,8 +9,6 @@ def parse_line(line):
     return [x for x in line if x is not None]
 
 
-ref = (0, 0)
-
 # Same as previous day_24_2.py but factor out (0,1) from x and (1,1) from y coordinates
 directions_map = {
     "w": (-2, 0),
@@ -31,22 +29,14 @@ def get_adjacents(tile):
 
 
 with open("inputs/day24.txt") as f:
-    lines = f.readlines()
-    tiles = [parse_line(line) for line in lines]
-
     black_tiles = set()
-
-    for tile in tiles:
+    for tile in map(parse_line, f.readlines()):
         directions = map(directions_map.get, tile)
-
-        destination = reduce(add_tile, directions, ref)
-        if destination in black_tiles:
-            black_tiles.remove(destination)
-        else:
-            black_tiles.add(destination)
+        destination = reduce(add_tile, directions, (0, 0))
+        black_tiles ^= {destination}
 
 
-def count_adjacent_black_tiles(black_tiles, tile):
+def count_adjacent_black_tiles(tile):
     return sum(tile in black_tiles for tile in get_adjacents(tile))
 
 
@@ -57,17 +47,8 @@ for day in range(100):
         if tile not in black_tiles
     }
 
-    tiles_to_toggle = set()
-
-    for tile in black_tiles:
-        if count_adjacent_black_tiles(black_tiles, tile) not in [1, 2]:
-            tiles_to_toggle.add(tile)
-    for tile in white_tiles:
-        if count_adjacent_black_tiles(black_tiles, tile) == 2:
-            tiles_to_toggle.add(tile)
-    for tile in tiles_to_toggle:
-        if tile not in black_tiles:
-            black_tiles.add(tile)
-        else:
-            black_tiles.remove(tile)
+    black_tiles ^= {
+        *filter(lambda tile: count_adjacent_black_tiles(tile) not in [1, 2], black_tiles),
+        *filter(lambda tile: count_adjacent_black_tiles(tile) == 2, white_tiles)
+    }
     print("Day", day + 1, "black tiles:", len(black_tiles))
